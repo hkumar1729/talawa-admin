@@ -173,26 +173,23 @@ const AgendaItemsUpdateModal: React.FC<
         <Form onSubmit={updateAgendaItemHandler}>
           <Form.Group className="d-flex mb-3 w-100">
             <Autocomplete
-              multiple
               className={`${styles.noOutline} w-100`}
               limitTags={2}
               data-testid="categorySelect"
               options={agendaItemCategories || []}
               value={
-                agendaItemCategories?.filter((category) =>
-                  formState.agendaItemCategoryIds.includes(category._id),
-                ) || []
+                agendaItemCategories?.find(
+                  (category) => category.id === formState.folderId,
+                ) || null
               }
               filterSelectedOptions={true}
               getOptionLabel={(
                 category: InterfaceAgendaItemCategoryInfo,
               ): string => category.name}
-              onChange={(_, newCategories): void => {
+              onChange={(_, category): void => {
                 setFormState({
                   ...formState,
-                  agendaItemCategoryIds: newCategories.map(
-                    (category) => category._id,
-                  ),
+                  folderId: category?.id ?? null,
                 });
               }}
               renderInput={(params) => (

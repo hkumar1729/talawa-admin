@@ -125,9 +125,7 @@ const AgendaItemsPreviewModal: React.FC<
             </div>
             <div className={styles.preview}>
               <p>{t('createdBy')}</p>
-              <span className={styles.view}>
-                {`${formState.createdBy.firstName} ${formState.createdBy.lastName}`}
-              </span>
+              <span className={styles.view}>{`${formState.creator.name}`}</span>
             </div>
             <div className={styles.preview}>
               <p>{t('urls')}</p>

@@ -28,7 +28,7 @@
  * />
  * ```
  */
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import type { FormEvent, JSX } from 'react';
 import { Button, Col, Row } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
@@ -40,6 +40,7 @@ import type { DropResult } from '@hello-pangea/dnd';
 import {
   DELETE_AGENDA_ITEM_MUTATION,
   UPDATE_AGENDA_ITEM_MUTATION,
+  UPDATE_AGENDA_ITEM_SEQUENCE_MUTATION,
 } from 'GraphQl/Mutations/mutations';
 import type {
   InterfaceAgendaItemInfo,
@@ -75,25 +76,38 @@ function AgendaItemsContainer({
 
   // State for current agenda item ID and form data
   const [agendaItemId, setAgendaItemId] = useState('');
-
+  const [items, setItems] = useState<InterfaceAgendaItemInfo[]>([]);
+  useEffect(() => {
+    if (agendaItemData) {
+      setItems([...agendaItemData].sort((a, b) => a.sequence - b.sequence));
+    }
+  }, [agendaItemData]);
   const [formState, setFormState] = useState<{
-    agendaItemCategoryIds: string[];
+    folderId: string | null;
     agendaItemCategoryNames: string[];
     title: string;
     description: string;
     duration: string;
+    key: string;
     attachments: string[];
     urls: string[];
-    createdBy: { firstName: string; lastName: string };
+    creator: {
+      id: string;
+      name: string;
+    };
   }>({
-    agendaItemCategoryIds: [],
+    folderId: '',
     agendaItemCategoryNames: [],
     title: '',
+    key: '',
     description: '',
     duration: '',
     attachments: [],
     urls: [],
-    createdBy: { firstName: '', lastName: '' },
+    creator: {
+      id: '',
+      name: '',
+    },
   });
 
   /**
@@ -134,6 +148,9 @@ function AgendaItemsContainer({
   };
 
   const [updateAgendaItem] = useMutation(UPDATE_AGENDA_ITEM_MUTATION);
+  const [updateAgendaItemSequence] = useMutation(
+    UPDATE_AGENDA_ITEM_SEQUENCE_MUTATION,
+  );
 
   /**
    * Handles updating an agenda item.
@@ -146,14 +163,16 @@ function AgendaItemsContainer({
     try {
       await updateAgendaItem({
         variables: {
-          updateAgendaItemId: agendaItemId,
           input: {
-            title: formState.title,
+            id: agendaItemId,
+            name: formState.title,
             description: formState.description,
             duration: formState.duration,
-            categories: formState.agendaItemCategoryIds,
-            attachments: formState.attachments,
-            urls: formState.urls,
+            folderId: formState.folderId,
+            // attachments: formState.attachments,
+            url: formState.urls.map((u) => ({
+              agendaItemURL: u,
+            })),
           },
         },
       });
@@ -175,7 +194,7 @@ function AgendaItemsContainer({
   const deleteAgendaItemHandler = async (): Promise<void> => {
     try {
       await deleteAgendaItem({
-        variables: { removeAgendaItemId: agendaItemId },
+        variables: { input: { id: agendaItemId } },
       });
       agendaItemRefetch();
       toggleDeleteModal();
@@ -203,23 +222,21 @@ function AgendaItemsContainer({
   const setAgendaItemState = (agendaItem: InterfaceAgendaItemInfo): void => {
     setFormState({
       ...formState,
-      agendaItemCategoryIds: agendaItem.categories.map(
-        (category) => category._id,
-      ),
-      agendaItemCategoryNames: agendaItem.categories.map(
-        (category) => category.name,
-      ),
-      title: agendaItem.title,
+      folderId: agendaItem.folder ? agendaItem.folder.id : '',
+      title: agendaItem.name,
       description: agendaItem.description,
       duration: agendaItem.duration,
-      attachments: agendaItem.attachments,
-      urls: agendaItem.urls,
-      createdBy: {
-        firstName: agendaItem.createdBy.firstName,
-        lastName: agendaItem.createdBy.lastName,
+      agendaItemCategoryNames: agendaItem.folder
+        ? [agendaItem.folder?.name]
+        : [''],
+      //attachments: agendaItem.attachments,
+      urls: agendaItem.url?.map((u) => u.url) ?? [],
+      creator: {
+        id: agendaItem.creator.id,
+        name: agendaItem.creator.name,
       },
     });
-    setAgendaItemId(agendaItem._id);
+    setAgendaItemId(agendaItem.id);
   };
 
   /**
@@ -227,23 +244,27 @@ function AgendaItemsContainer({
    * @param result - The result of the drag-and-drop operation.
    */
   const onDragEnd = async (result: DropResult): Promise<void> => {
-    if (!result.destination || !agendaItemData) {
+    if (!result.destination) {
+      return;
+    }
+    if (result.source.index === result.destination.index) {
       return;
     }
 
-    const reorderedAgendaItems = Array.from(agendaItemData);
-    const [removed] = reorderedAgendaItems.splice(result.source.index, 1);
-    reorderedAgendaItems.splice(result.destination.index, 0, removed);
+    const updatedItems = Array.from(items);
+    const [moved] = updatedItems.splice(result.source.index, 1);
+    updatedItems.splice(result.destination.index, 0, moved);
+    setItems(updatedItems);
 
     try {
       await Promise.all(
-        reorderedAgendaItems.map(async (item, index) => {
+        updatedItems.map(async (item, index) => {
           if (item.sequence !== index + 1) {
             // Only update if the sequence has changed
-            await updateAgendaItem({
+            await updateAgendaItemSequence({
               variables: {
-                updateAgendaItemId: item._id,
                 input: {
+                  id: item.id,
                   sequence: index + 1, // Update sequence based on new index
                 },
               },
@@ -285,7 +306,7 @@ function AgendaItemsContainer({
               xs={6}
               sm={4}
               md={2}
-              lg={3}
+              lg={2}
               className="align-self-center fw-bold text-center"
             >
               {t('title')}
@@ -293,7 +314,7 @@ function AgendaItemsContainer({
             <Col
               className="fw-bold align-self-center d-none d-md-block text-center"
               md={3}
-              lg={3}
+              lg={2}
             >
               {t('category')}
             </Col>
@@ -303,6 +324,15 @@ function AgendaItemsContainer({
               lg={3}
             >
               {t('description')}
+            </Col>
+            <Col
+              xs={6}
+              sm={4}
+              md={2}
+              lg={2}
+              className="align-self-center fw-bold text-center"
+            >
+              {t('duration')}
             </Col>
             <Col
               xs={12}
@@ -323,11 +353,11 @@ function AgendaItemsContainer({
                 ref={provided.innerRef}
                 className={`bg-light-subtle border border-light-subtle border-top-0 shadow-sm ${agendaItemConnection === 'Event' ? 'rounded-bottom-4 mx-4' : 'rounded-bottom-2 mb-2 mx-0'}`}
               >
-                {agendaItemData &&
-                  agendaItemData.map((agendaItem, index) => (
+                {items &&
+                  items.map((agendaItem, index) => (
                     <Draggable
-                      key={agendaItem._id}
-                      draggableId={agendaItem._id}
+                      key={agendaItem.id}
+                      draggableId={agendaItem.id}
                       index={index}
                     >
                       {(provided, snapshot) => (
@@ -355,28 +385,21 @@ function AgendaItemsContainer({
                               xs={6}
                               sm={4}
                               md={2}
-                              lg={3}
+                              lg={2}
                               className="p-1 align-self-center text-body-secondary text-center"
                             >
-                              {agendaItem.title}
+                              {agendaItem.name}
                             </Col>
                             <Col
                               md={3}
-                              lg={3}
+                              lg={2}
                               className="p-1 d-none d-md-block align-self-center text-body-secondary text-center"
                             >
                               <div className={styles.categoryContainer}>
-                                {agendaItem.categories.length > 0 ? (
-                                  agendaItem.categories.map((category, idx) => (
-                                    <span
-                                      key={category._id}
-                                      className={styles.categoryChip}
-                                    >
-                                      {category.name}
-                                      {idx < agendaItem.categories.length - 1 &&
-                                        ', '}
-                                    </span>
-                                  ))
+                                {agendaItem.folder ? (
+                                  <span className={styles.categoryChip}>
+                                    {agendaItem.folder.name}
+                                  </span>
                                 ) : (
                                   <span className={styles.categoryChip}>
                                     No Category
@@ -390,6 +413,13 @@ function AgendaItemsContainer({
                               className="p-1 d-none d-md-block align-self-center text-body-secondary text-center"
                             >
                               {agendaItem.description}
+                            </Col>
+                            <Col
+                              md={3}
+                              lg={2}
+                              className="p-1 d-none d-md-block align-self-center text-body-secondary text-center"
+                            >
+                              {agendaItem.duration || '-'}
                             </Col>
                             <Col
                               xs={12}

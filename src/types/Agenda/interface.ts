@@ -1,18 +1,17 @@
 import type { ChangeEvent } from 'react';
 
 export interface InterfaceAgendaItemCategoryInfo {
-  _id: string;
+  id: string;
   name: string;
-  description: string;
-  createdBy: {
-    _id: string;
-    firstName: string;
-    lastName: string;
+  //description: string;
+  creator: {
+    id: string;
+    name: string;
   };
 }
 
 export interface InterfaceCreateFormStateType {
-  agendaItemCategoryIds: string[];
+  folderId: string | null;
   title: string;
   description: string;
   duration: string;
@@ -21,16 +20,17 @@ export interface InterfaceCreateFormStateType {
 }
 
 export interface InterfaceFormStateType {
-  agendaItemCategoryIds: string[];
+  folderId: string | null;
   agendaItemCategoryNames: string[];
+  key: string;
   title: string;
   description: string;
   duration: string;
   attachments: string[];
   urls: string[];
-  createdBy: {
-    firstName: string;
-    lastName: string;
+  creator: {
+    id: string;
+    name: string;
   };
 }
 

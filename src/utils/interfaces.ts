@@ -2379,13 +2379,12 @@ export interface InterfaceQueryMembershipRequestsListItem {
  * @property {string} createdBy.lastName - The last name of the creator.
  */
 export interface InterfaceAgendaItemCategoryInfo {
-  _id: string;
+  id: string;
   name: string;
-  description: string;
-  createdBy: {
-    _id: string;
-    firstName: string;
-    lastName: string;
+  // description: string;
+  creator: {
+    id: string;
+    name: string;
   };
 }
 
@@ -2395,7 +2394,7 @@ export interface InterfaceAgendaItemCategoryInfo {
  * @property {InterfaceAgendaItemCategoryInfo[]} agendaItemCategoriesByOrganization - An array of agenda item category information.
  */
 export interface InterfaceAgendaItemCategoryList {
-  agendaItemCategoriesByOrganization: InterfaceAgendaItemCategoryInfo[];
+  agendaFolderByOrganization: InterfaceAgendaItemCategoryInfo[];
 }
 
 /**
@@ -2457,34 +2456,31 @@ export interface InterfaceFormData {
  * @property {string} relatedEvent.title - The title of the related event.
  */
 export interface InterfaceAgendaItemInfo {
-  _id: string;
-  title: string;
+  id: string;
+  name: string;
   description: string;
   duration: string;
-  attachments: string[];
-  createdBy: {
-    _id: string;
-    firstName: string;
-    lastName: string;
-  };
-  urls: string[];
-  users: {
-    _id: string;
-    firstName: string;
-    lastName: string;
-  }[];
   sequence: number;
-  categories: {
-    _id: string;
-    name: string;
-  }[];
-  organization: {
-    _id: string;
+  //attachments: string[];
+  creator: {
+    id: string;
     name: string;
   };
-  relatedEvent: {
-    _id: string;
-    title: string;
+  url: {
+    id: string;
+    url: string;
+  }[];
+  folder: {
+    id: string;
+    name: string;
+  } | null;
+  // organization: {
+  //   _id: string;
+  //   name: string;
+  // };
+  event: {
+    id: string;
+    name: string;
   };
 }
 
@@ -2494,7 +2490,7 @@ export interface InterfaceAgendaItemInfo {
  * @property {InterfaceAgendaItemInfo[]} agendaItemByEvent - An array of agenda item information.
  */
 export interface InterfaceAgendaItemList {
-  agendaItemByEvent: InterfaceAgendaItemInfo[];
+  agendaItemByEventId: InterfaceAgendaItemInfo[];
 }
 
 /**

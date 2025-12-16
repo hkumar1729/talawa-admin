@@ -44,7 +44,6 @@ import { Autocomplete, TextField } from '@mui/material';
 import { FaLink, FaTrash } from 'react-icons/fa';
 import { toast } from 'react-toastify';
 import styles from '../../../style/app-fixed.module.css';
-import type { InterfaceAgendaItemCategoryInfo } from 'utils/interfaces';
 import convertToBase64 from 'utils/convertToBase64';
 import type { InterfaceAgendaItemsCreateModalProps } from 'types/Agenda/interface';
 const AgendaItemsCreateModal: React.FC<
@@ -171,26 +170,21 @@ const AgendaItemsCreateModal: React.FC<
         <Form onSubmit={createAgendaItemHandler}>
           <Form.Group className="d-flex mb-3 w-100">
             <Autocomplete
-              multiple
               className={`${styles.noOutline} w-100`}
               limitTags={2}
               data-testid="categorySelect"
               options={agendaItemCategories || []}
               value={
-                agendaItemCategories?.filter((category) =>
-                  formState.agendaItemCategoryIds.includes(category._id),
-                ) || []
+                agendaItemCategories?.find(
+                  (category) => category.id === formState.folderId,
+                ) || null
               }
               filterSelectedOptions={true}
-              getOptionLabel={(
-                category: InterfaceAgendaItemCategoryInfo,
-              ): string => category.name}
-              onChange={(_, newCategories): void => {
+              getOptionLabel={(category) => category.name}
+              onChange={(_, category): void => {
                 setFormState({
                   ...formState,
-                  agendaItemCategoryIds: newCategories.map(
-                    (category) => category._id,
-                  ),
+                  folderId: category?.id ?? null,
                 });
               }}
               renderInput={(params) => (

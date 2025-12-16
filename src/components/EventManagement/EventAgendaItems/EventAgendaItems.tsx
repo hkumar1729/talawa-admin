@@ -75,7 +75,7 @@ function EventAgendaItems(props: { eventId: string }): JSX.Element {
 
   // State to manage form values
   const [formState, setFormState] = useState({
-    agendaItemCategoryIds: [''],
+    folderId: null as string | null,
     title: '',
     description: '',
     duration: '',
@@ -93,7 +93,11 @@ function EventAgendaItems(props: { eventId: string }): JSX.Element {
     loading: boolean;
     error?: Error | undefined;
   } = useQuery(AGENDA_ITEM_CATEGORY_LIST, {
-    variables: { organizationId: orgId },
+    variables: {
+      input: {
+        organizationId: orgId,
+      },
+    },
     notifyOnNetworkStatusChange: true,
   });
 
@@ -109,7 +113,8 @@ function EventAgendaItems(props: { eventId: string }): JSX.Element {
     error?: unknown | undefined;
     refetch: () => void;
   } = useQuery(AgendaItemByEvent, {
-    variables: { relatedEventId: eventId }, //eventId
+    variables: { eventId }, //eventId
+    skip: !eventId,
     notifyOnNetworkStatusChange: true,
   });
 
@@ -125,23 +130,30 @@ function EventAgendaItems(props: { eventId: string }): JSX.Element {
     e: ChangeEvent<HTMLFormElement>,
   ): Promise<void> => {
     e.preventDefault();
-    const agendaItems = Array.isArray(agendaItemData?.agendaItemByEvent)
-      ? agendaItemData?.agendaItemByEvent
+    const agendaItems = Array.isArray(agendaItemData?.agendaItemByEventId)
+      ? agendaItemData?.agendaItemByEventId
       : [];
     const nextSequence = agendaItems.length + 1;
     try {
       await createAgendaItem({
         variables: {
           input: {
-            title: formState.title,
+            name: formState.title,
             description: formState.description,
-            relatedEventId: eventId,
-            organizationId: orgId,
+            eventId: eventId,
             sequence: nextSequence, // Assign sequence based on current length
             duration: formState.duration,
-            categories: formState.agendaItemCategoryIds,
-            attachments: formState.attachments,
-            urls: formState.urls,
+            folderId: formState.folderId,
+            //attachments: formState.attachments,
+            //type:
+            //key:
+            url:
+              formState.urls.length > 0
+                ? formState.urls.map((u) => ({
+                    agendaItemURL: u,
+                  }))
+                : undefined,
+            type: 'general',
           },
         },
       });
@@ -151,7 +163,7 @@ function EventAgendaItems(props: { eventId: string }): JSX.Element {
         title: '',
         description: '',
         duration: '',
-        agendaItemCategoryIds: [''],
+        folderId: null,
         attachments: [''],
         urls: [''],
       });
@@ -235,11 +247,9 @@ function EventAgendaItems(props: { eventId: string }): JSX.Element {
 
         <AgendaItemsContainer
           agendaItemConnection={`Event`}
-          agendaItemData={agendaItemData?.agendaItemByEvent}
+          agendaItemData={agendaItemData?.agendaItemByEventId}
           agendaItemRefetch={refetchAgendaItem}
-          agendaItemCategories={
-            agendaCategoryData?.agendaItemCategoriesByOrganization
-          }
+          agendaItemCategories={agendaCategoryData?.agendaFolderByOrganization}
         />
       </div>
 
@@ -250,9 +260,7 @@ function EventAgendaItems(props: { eventId: string }): JSX.Element {
         setFormState={setFormState}
         createAgendaItemHandler={createAgendaItemHandler}
         t={t}
-        agendaItemCategories={
-          agendaCategoryData?.agendaItemCategoriesByOrganization
-        }
+        agendaItemCategories={agendaCategoryData?.agendaFolderByOrganization}
       />
     </div>
   );

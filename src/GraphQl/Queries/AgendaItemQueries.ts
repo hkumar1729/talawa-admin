@@ -1,36 +1,41 @@
 import gql from 'graphql-tag';
 
 export const AgendaItemByEvent = gql`
-  query AgendaItemByEvent($relatedEventId: ID!) {
-    agendaItemByEvent(relatedEventId: $relatedEventId) {
-      _id
-      title
+  query AgendaItemsByEvent($eventId: ID!) {
+    agendaItemByEventId(eventId: $eventId) {
+      id
+      name
       description
+      type
       duration
-      attachments
-      createdBy {
-        _id
-        firstName
-        lastName
-      }
-      urls
-      users {
-        _id
-        firstName
-        lastName
-      }
+      key
       sequence
-      categories {
-        _id
+      createdAt
+      updatedAt
+
+      url {
+        id
+        url
+      }
+
+      creator {
+        id
         name
       }
-      organization {
-        _id
+
+      updater {
+        id
         name
       }
-      relatedEvent {
-        _id
-        title
+
+      event {
+        id
+        name
+      }
+
+      folder {
+        id
+        name
       }
     }
   }
