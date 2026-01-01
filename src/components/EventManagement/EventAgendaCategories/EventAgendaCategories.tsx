@@ -45,17 +45,19 @@ import AgendaCategoryCreateModal from './Create/AgendaCategoryCreateModal';
 import styles from 'style/app-fixed.module.css';
 import Loader from 'components/Loader/Loader';
 import SearchBar from 'shared-components/SearchBar/SearchBar';
+import { useParams } from 'react-router';
 
 interface InterfaceAgendaCategoryProps {
-  orgId: string;
+  eventId: string;
 }
 
 const organizationAgendaCategory: FC<InterfaceAgendaCategoryProps> = ({
-  orgId,
+  eventId,
 }) => {
   const { t } = useTranslation('translation', {
     keyPrefix: 'organizationAgendaCategory',
   });
+  const { orgId } = useParams();
   const { t: tCommon } = useTranslation('common');
   // State for managing modal visibility and form data
   const [agendaCategoryCreateModalIsOpen, setAgendaCategoryCreateModalIsOpen] =
@@ -84,9 +86,7 @@ const organizationAgendaCategory: FC<InterfaceAgendaCategoryProps> = ({
     refetch: () => void;
   } = useQuery(AGENDA_ITEM_CATEGORY_LIST, {
     variables: {
-      input: {
-        organizationId: orgId,
-      },
+      eventId,
     },
     notifyOnNetworkStatusChange: true,
   });
@@ -115,6 +115,7 @@ const organizationAgendaCategory: FC<InterfaceAgendaCategoryProps> = ({
             organizationId: orgId,
             name: formState.name,
             description: formState.description,
+            eventId,
           },
         },
       });
@@ -190,7 +191,7 @@ const organizationAgendaCategory: FC<InterfaceAgendaCategoryProps> = ({
 
         <AgendaCategoryContainer
           agendaCategoryConnection={`Organization`}
-          agendaCategoryData={agendaCategoryData?.agendaFolderByEventId}
+          agendaCategoryData={agendaCategoryData?.agendaCategoryByEventId}
           agendaCategoryRefetch={refetchAgendaCategory}
         />
       </div>

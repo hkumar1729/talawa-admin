@@ -52,10 +52,11 @@ import styles from 'style/app-fixed.module.css';
 import EventDashboard from 'components/EventManagement/Dashboard/EventDashboard';
 import EventActionItems from 'components/EventManagement/EventActionItems/EventActionItems';
 import VolunteerContainer from 'screens/EventVolunteers/VolunteerContainer';
-import EventAgendaItems from 'components/EventManagement/EventAgendaItems/EventAgendaItems';
 import useLocalStorage from 'utils/useLocalstorage';
 import EventAttendance from 'components/EventManagement/EventAttendance/Attendance/EventAttendance';
 import EventRegistrants from 'components/EventManagement/EventRegistrant/EventRegistrants';
+import EventAgendaCategories from 'components/EventManagement/EventAgendaCategories/EventAgendaCategories';
+import EventAgendaFolder from 'components/EventManagement/EventAgendaFolder/EventAgendaFolder';
 /**
  * Tab options for the event management component.
  */
@@ -66,7 +67,9 @@ type TabOptions =
   | 'agendas'
   | 'actions'
   | 'volunteers'
-  | 'statistics';
+  | 'statistics'
+  | 'agenda'
+  | 'agendaFolder';
 
 interface InterfaceTabConfig {
   value: TabOptions;
@@ -137,11 +140,20 @@ const EventManagement = (): JSX.Element => {
       ),
     },
     {
+      value: 'agenda',
+      icon: <EventAgendaItemsIcon width={23} height={23} className="me-1" />,
+      component: (
+        <div data-testid="eventAgendasTab" className="mx-4 p-4 pt-2 mt-5">
+          <EventAgendaCategories eventId={eventId} />
+        </div>
+      ),
+    },
+    {
       value: 'agendas',
       icon: <EventAgendaItemsIcon width={23} height={23} className="me-1" />,
       component: (
         <div data-testid="eventAgendasTab" className="mx-4 p-4 pt-2 mt-5">
-          <EventAgendaItems eventId={eventId} />
+          <EventAgendaFolder eventId={eventId} />
         </div>
       ),
     },
@@ -190,7 +202,7 @@ const EventManagement = (): JSX.Element => {
     const props = {
       variant,
       className,
-      style: { height: '2.5rem' },
+      style: { height: '2.5rem', whiteSpace: 'nowrap' },
       onClick: () => setTab(value),
       'data-testid': `${value}Btn`,
     };
@@ -217,7 +229,7 @@ const EventManagement = (): JSX.Element => {
     <div className="d-flex flex-column bg-white rounded-4 min-vh-75">
       <Row className="mx-3 mt-4">
         <Col>
-          <div className="d-none d-md-flex gap-3">
+          <div className="d-none d-md-flex gap-3 overflow-auto">
             <Button
               size="sm"
               variant="light"

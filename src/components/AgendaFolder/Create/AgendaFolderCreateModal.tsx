@@ -34,59 +34,77 @@ import { Modal, Form, Button } from 'react-bootstrap';
 import type { ChangeEvent } from 'react';
 import styles from 'style/app-fixed.module.css';
 
+// interface InterfaceFormStateType {
+//   name: string;
+//   description: string;
+//   creator: {
+//     name: string;
+//   };
+// }
+// interface InterfaceAgendaCategoryCreateModalProps {
+//   agendaCategoryCreateModalIsOpen: boolean;
+//   hideCreateModal: () => void;
+//   formState: InterfaceFormStateType;
+//   setFormState: (state: React.SetStateAction<InterfaceFormStateType>) => void;
+//   createAgendaCategoryHandler: (
+//     e: ChangeEvent<HTMLFormElement>,
+//   ) => Promise<void>;
+//   t: (key: string) => string;
+// }
+
 interface InterfaceFormStateType {
+  id: string;
   name: string;
   description: string;
   creator: {
     name: string;
   };
 }
-interface InterfaceAgendaCategoryCreateModalProps {
-  agendaCategoryCreateModalIsOpen: boolean;
+
+interface InterfaceAgendaFolderCreateModalProps {
+  agendaFolderCreateModalIsOpen: boolean;
   hideCreateModal: () => void;
   formState: InterfaceFormStateType;
   setFormState: (state: React.SetStateAction<InterfaceFormStateType>) => void;
-  createAgendaCategoryHandler: (
-    e: ChangeEvent<HTMLFormElement>,
-  ) => Promise<void>;
+  createAgendaFolderHandler: (e: ChangeEvent<HTMLFormElement>) => Promise<void>;
   t: (key: string) => string;
 }
 
-const AgendaCategoryCreateModal: React.FC<
-  InterfaceAgendaCategoryCreateModalProps
+const AgendaFolderCreateModal: React.FC<
+  InterfaceAgendaFolderCreateModalProps
 > = ({
-  agendaCategoryCreateModalIsOpen,
+  agendaFolderCreateModalIsOpen,
   hideCreateModal,
   formState,
   setFormState,
-  createAgendaCategoryHandler,
+  createAgendaFolderHandler,
   t,
 }) => {
   return (
     <Modal
       className={`mt-5 ${styles.campaignModal}`}
-      show={agendaCategoryCreateModalIsOpen}
+      show={agendaFolderCreateModalIsOpen}
       onHide={hideCreateModal}
     >
       <Modal.Header>
         <p className={styles.titlemodalOrganizationEvents}>
-          {t('agendaCategoryDetails')}
+          {t('agendaFolderDetails')}
         </p>
         <Button
           variant="danger"
           onClick={hideCreateModal}
-          data-testid="createAgendaCategoryModalCloseBtn"
+          data-testid="createAgendaFolderModalCloseBtn"
         >
           <i className="fa fa-times"></i>
         </Button>
       </Modal.Header>
       <Modal.Body>
-        <Form onSubmit={createAgendaCategoryHandler}>
+        <Form onSubmit={createAgendaFolderHandler}>
           <Form.Group className="mb-3" controlId="name">
             <Form.Label>{t('name')}</Form.Label>
             <Form.Control
               type="text"
-              placeholder={t('name')}
+              placeholder={t('namePlaceholder')}
               value={formState.name}
               required
               onChange={(e) =>
@@ -109,10 +127,10 @@ const AgendaCategoryCreateModal: React.FC<
           <Button
             type="submit"
             className={styles.regBtn}
-            value="createAgendaCategory"
-            data-testid="createAgendaCategoryFormSubmitBtn"
+            value="createAgendaFolder"
+            data-testid="createAgendaFolderFormSubmitBtn"
           >
-            {t('createAgendaCategory')}
+            {t('createAgendaFolder')}
           </Button>
         </Form>
       </Modal.Body>
@@ -120,4 +138,4 @@ const AgendaCategoryCreateModal: React.FC<
   );
 };
 
-export default AgendaCategoryCreateModal;
+export default AgendaFolderCreateModal;

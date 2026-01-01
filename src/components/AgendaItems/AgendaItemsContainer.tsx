@@ -252,6 +252,7 @@ function AgendaItemsContainer({
     }
 
     const updatedItems = Array.from(items);
+    console.log(updatedItems);
     const [moved] = updatedItems.splice(result.source.index, 1);
     updatedItems.splice(result.destination.index, 0, moved);
     setItems(updatedItems);

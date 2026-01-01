@@ -7,9 +7,15 @@ import gql from 'graphql-tag';
  */
 
 export const CREATE_AGENDA_ITEM_CATEGORY_MUTATION = gql`
-  mutation CreateAgendaCategory($input: CreateAgendaCategoryInput!) {
+  mutation CreateAgendaCategory($input: MutationCreateAgendaCategoryInput!) {
     createAgendaCategory(input: $input) {
-      _id
+      id
+      name
+      createdAt
+      description
+      creator {
+        name
+      }
     }
   }
 `;
@@ -21,8 +27,10 @@ export const CREATE_AGENDA_ITEM_CATEGORY_MUTATION = gql`
  */
 
 export const DELETE_AGENDA_ITEM_CATEGORY_MUTATION = gql`
-  mutation DeleteAgendaCategory($deleteAgendaCategoryId: ID!) {
-    deleteAgendaCategory(id: $deleteAgendaCategoryId)
+  mutation deleteAgendaCategory($input: MutationDeleteAgendaCategoryInput!) {
+    deleteAgendaCategory(input: $input) {
+      id
+    }
   }
 `;
 
@@ -34,12 +42,12 @@ export const DELETE_AGENDA_ITEM_CATEGORY_MUTATION = gql`
  */
 
 export const UPDATE_AGENDA_ITEM_CATEGORY_MUTATION = gql`
-  mutation UpdateAgendaCategory(
-    $updateAgendaCategoryId: ID!
-    $input: UpdateAgendaCategoryInput!
-  ) {
-    updateAgendaCategory(id: $updateAgendaCategoryId, input: $input) {
-      _id
+  mutation updateAgendaCategory($input: MutationUpdateAgendaCategoryInput!) {
+    updateAgendaCategory(input: $input) {
+      id
+      name
+      description
+      updatedAt
     }
   }
 `;

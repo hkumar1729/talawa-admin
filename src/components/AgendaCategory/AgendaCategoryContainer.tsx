@@ -136,8 +136,11 @@ function agendaCategoryContainer({
     try {
       await updateAgendaCategory({
         variables: {
-          updateAgendaCategoryId: agendaCategoryId,
-          input: { name: formState.name, description: formState.description },
+          input: {
+            id: agendaCategoryId,
+            name: formState.name,
+            description: formState.description,
+          },
         },
       });
 
@@ -161,7 +164,9 @@ function agendaCategoryContainer({
   const deleteAgendaCategoryHandler = async (): Promise<void> => {
     try {
       await deleteAgendaCategory({
-        variables: { deleteAgendaCategoryId: agendaCategoryId },
+        variables: {
+          input: { id: agendaCategoryId },
+        },
       });
       agendaCategoryRefetch();
       toggleDeleteModal();
@@ -197,9 +202,9 @@ function agendaCategoryContainer({
       ...formState,
       name: `${agendaItemCategory.name} `,
       description: `${agendaItemCategory.description}`,
-      createdBy: `${agendaItemCategory.createdBy.firstName} ${agendaItemCategory.createdBy.lastName}`,
+      createdBy: `${agendaItemCategory.creator.name}`,
     });
-    setAgendaCategoryId(agendaItemCategory._id);
+    setAgendaCategoryId(agendaItemCategory.id);
   };
 
   return (
@@ -214,26 +219,35 @@ function agendaCategoryContainer({
             className={`mx-0 border border-light-subtle py-3 ${agendaCategoryConnection === 'Organization' ? 'rounded-top-4' : 'rounded-top-2'}`}
           >
             <Col
-              xs={7}
+              xs={6}
               sm={4}
-              md={3}
-              lg={2}
-              className="align-self-center ps-3 fw-bold"
+              md={4}
+              lg={3}
+              className="align-self-center ps-4 fw-bold"
             >
-              <div className="ms-3">{t('name')}</div>
+              {t('name')}
             </Col>
             <Col
-              className={`  align-self-center  fw-bold d-none d-md-block`}
-              md={6}
-              lg={6}
+              className={`  align-self-center ps-4 fw-bold d-none d-md-block`}
+              md={4}
+              lg={4}
             >
               {t('description')}
             </Col>
-            <Col className="d-none d-lg-block fw-bold align-self-center" lg={2}>
-              <div className="ms-1">{t('createdBy')}</div>
+            <Col
+              className="d-none d-lg-block fw-bold align-self-center ps-4"
+              lg={3}
+            >
+              {t('createdBy')}
             </Col>
-            <Col xs={5} sm={3} lg={2} className="fw-bold align-self-center">
-              <div className="ms-2">{t('options')}</div>
+            <Col
+              xs={6}
+              md={4}
+              sm={3}
+              lg={2}
+              className="fw-bold align-self-center ps-4 "
+            >
+              {t('options')}
             </Col>
           </Row>
         </div>
@@ -242,32 +256,38 @@ function agendaCategoryContainer({
         >
           {agendaCategoryData?.map((agendaCategory, index) => (
             <div key={index}>
-              <Row className={`${index === 0 ? 'pt-3' : ''} mb-3 mx-2 `}>
+              <Row className={`${index === 0 ? 'pt-3' : ''} mb-3 mx-0 `}>
                 <Col
                   sm={4}
-                  xs={7}
-                  md={3}
-                  lg={2}
-                  className="align-self-center text-body-secondary"
+                  xs={6}
+                  md={4}
+                  lg={3}
+                  className="align-self-center text-body-secondary ps-4 "
                 >
                   {`${agendaCategory.name}`}
                 </Col>
                 <Col
-                  md={6}
-                  lg={6}
-                  className="p-1 d-none d-md-block align-self-center text-body-secondary"
+                  md={4}
+                  lg={4}
+                  className="p-1 d-none d-md-block align-self-center text-body-secondary ps-4 "
                 >
                   {agendaCategory.description}
                 </Col>
                 <Col
-                  lg={2}
-                  className="p-1 d-none d-lg-block align-self-center text-body-secondary"
+                  lg={3}
+                  className="p-1 d-none d-lg-block align-self-center text-body-secondary ps-4 "
                 >
-                  {`${agendaCategory.createdBy.firstName} ${agendaCategory.createdBy.lastName}`}
+                  {`${agendaCategory.creator.name}`}
                 </Col>
 
-                <Col xs={5} sm={3} lg={2} className="p-0 align-self-center">
-                  <div className="d-flex align-items-center ms-4 gap-2">
+                <Col
+                  xs={6}
+                  sm={3}
+                  md={4}
+                  lg={2}
+                  className="p-0 align-self-center ps-4 "
+                >
+                  <div className="d-flex align-items-center gap-2">
                     <Button
                       data-testid="previewAgendaCategoryModalBtn"
                       className={`${styles.agendaCategoryOptionsButton} d-flex align-items-center justify-content-center`}

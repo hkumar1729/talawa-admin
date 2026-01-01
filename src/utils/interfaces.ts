@@ -2381,7 +2381,7 @@ export interface InterfaceQueryMembershipRequestsListItem {
 export interface InterfaceAgendaItemCategoryInfo {
   id: string;
   name: string;
-  // description: string;
+  description: string;
   creator: {
     id: string;
     name: string;
@@ -2394,7 +2394,7 @@ export interface InterfaceAgendaItemCategoryInfo {
  * @property {InterfaceAgendaItemCategoryInfo[]} agendaItemCategoriesByOrganization - An array of agenda item category information.
  */
 export interface InterfaceAgendaItemCategoryList {
-  agendaFolderByOrganization: InterfaceAgendaItemCategoryInfo[];
+  agendaCategoryByEventId: InterfaceAgendaItemCategoryInfo[];
 }
 
 /**
@@ -2461,7 +2461,17 @@ export interface InterfaceAgendaItemInfo {
   description: string;
   duration: string;
   sequence: number;
-  //attachments: string[];
+  type?: string;
+  category: {
+    id: string;
+    name: string;
+    description: string;
+  };
+  // attachments: {
+  //   mimeType: string;
+  //   fileHash: string;
+  //   objectName: string;
+  // }[];
   creator: {
     id: string;
     name: string;
@@ -2482,6 +2492,52 @@ export interface InterfaceAgendaItemInfo {
     id: string;
     name: string;
   };
+}
+
+export interface InterfaceAgendaFolderInfo {
+  id: string;
+  name: string;
+  description?: string;
+  sequence: number;
+  key?: string;
+  isDefaultFolder?: boolean;
+  items: {
+    edges: {
+      node: {
+        id: string;
+        name: string;
+        description: string;
+        duration: string;
+        sequence: number;
+        attachment?: string[];
+        category: {
+          id: string;
+          name: string;
+          description: string;
+        };
+        creator: {
+          id: string;
+          name: string;
+        };
+        url: {
+          id: string;
+          url: string;
+        }[];
+        folder: {
+          id: string;
+          name: string;
+        } | null;
+        event: {
+          id: string;
+          name: string;
+        };
+      };
+    }[];
+  };
+}
+
+export interface InterfaceAgendaFolderList {
+  agendaFolderByEventId: InterfaceAgendaFolderInfo[];
 }
 
 /**

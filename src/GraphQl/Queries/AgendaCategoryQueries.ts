@@ -8,12 +8,11 @@ import gql from 'graphql-tag';
  */
 
 export const AGENDA_ITEM_CATEGORY_LIST = gql`
-  query AgendaFolderByOrganization(
-    $input: QueryAgendaFolderByOrganizationInput!
-  ) {
-    agendaFolderByOrganization(input: $input) {
+  query AgendaCategoryByEventId($eventId: ID!) {
+    agendaCategoryByEventId(eventId: $eventId) {
       id
       name
+      description
       creator {
         id
         name

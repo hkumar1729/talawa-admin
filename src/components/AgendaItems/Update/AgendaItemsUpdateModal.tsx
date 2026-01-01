@@ -54,19 +54,20 @@ const AgendaItemsUpdateModal: React.FC<
   InterfaceAgendaItemsUpdateModalProps
 > = ({
   agendaItemUpdateModalIsOpen,
-  hideUpdateModal,
-  formState,
-  setFormState,
+  hideUpdateItemModal,
+  itemFormState,
+  setItemFormState,
   updateAgendaItemHandler,
   t,
   agendaItemCategories,
+  agendaFolderData,
 }) => {
   const [newUrl, setNewUrl] = useState('');
 
   useEffect(() => {
-    setFormState((prevState) => ({
+    setItemFormState((prevState) => ({
       ...prevState,
-      urls: prevState.urls.filter((url) => url.trim() !== ''),
+      urls: prevState.url.filter((url) => url.trim() !== ''),
       attachments: prevState.attachments.filter((att) => att !== ''),
     }));
   }, []);
@@ -89,9 +90,9 @@ const AgendaItemsUpdateModal: React.FC<
    */
   const handleAddUrl = (): void => {
     if (newUrl.trim() !== '' && isValidUrl(newUrl.trim())) {
-      setFormState({
-        ...formState,
-        urls: [...formState.urls.filter((url) => url.trim() !== ''), newUrl],
+      setItemFormState({
+        ...itemFormState,
+        url: [...itemFormState.url.filter((url) => url.trim() !== ''), newUrl],
       });
       setNewUrl('');
     } else {
@@ -105,9 +106,9 @@ const AgendaItemsUpdateModal: React.FC<
    * @param url - The URL to remove.
    */
   const handleRemoveUrl = (url: string): void => {
-    setFormState({
-      ...formState,
-      urls: formState.urls.filter((item) => item !== url),
+    setItemFormState({
+      ...itemFormState,
+      url: itemFormState.url.filter((item) => item !== url),
     });
   };
 
@@ -135,9 +136,9 @@ const AgendaItemsUpdateModal: React.FC<
       const base64Files = await Promise.all(
         files.map(async (file) => await convertToBase64(file)),
       );
-      setFormState({
-        ...formState,
-        attachments: [...formState.attachments, ...base64Files],
+      setItemFormState({
+        ...itemFormState,
+        attachments: [...itemFormState.attachments, ...base64Files],
       });
     }
   };
@@ -148,9 +149,11 @@ const AgendaItemsUpdateModal: React.FC<
    * @param attachment - The attachment to remove.
    */
   const handleRemoveAttachment = (attachment: string): void => {
-    setFormState({
-      ...formState,
-      attachments: formState.attachments.filter((item) => item !== attachment),
+    setItemFormState({
+      ...itemFormState,
+      attachments: itemFormState.attachments.filter(
+        (item) => item !== attachment,
+      ),
     });
   };
 
@@ -158,12 +161,12 @@ const AgendaItemsUpdateModal: React.FC<
     <Modal
       className={styles.AgendaItemModal}
       show={agendaItemUpdateModalIsOpen}
-      onHide={hideUpdateModal}
+      onHide={hideUpdateItemModal}
     >
       <Modal.Header>
         <p className={styles.titlemodalAgendaItems}>{t('updateAgendaItem')}</p>
         <Button
-          onClick={hideUpdateModal}
+          onClick={hideUpdateItemModal}
           data-testid="updateAgendaItemModalCloseBtn"
         >
           <i className="fa fa-times" />
@@ -175,11 +178,35 @@ const AgendaItemsUpdateModal: React.FC<
             <Autocomplete
               className={`${styles.noOutline} w-100`}
               limitTags={2}
+              data-testid="folderSelect"
+              options={agendaFolderData ?? []}
+              value={
+                agendaFolderData?.find(
+                  (folder) => folder.id === itemFormState.folder,
+                ) || null
+              }
+              filterSelectedOptions={true}
+              getOptionLabel={(folder) => folder.name}
+              onChange={(_, folder): void => {
+                setItemFormState({
+                  ...itemFormState,
+                  folder: folder?.id ?? '',
+                });
+              }}
+              renderInput={(params) => (
+                <TextField {...params} label={t('folder')} />
+              )}
+            />
+          </Form.Group>
+          <Form.Group className="d-flex mb-3 w-100">
+            <Autocomplete
+              className={`${styles.noOutline} w-100`}
+              limitTags={2}
               data-testid="categorySelect"
               options={agendaItemCategories || []}
               value={
                 agendaItemCategories?.find(
-                  (category) => category.id === formState.folderId,
+                  (category) => category.id === itemFormState.category,
                 ) || null
               }
               filterSelectedOptions={true}
@@ -187,9 +214,9 @@ const AgendaItemsUpdateModal: React.FC<
                 category: InterfaceAgendaItemCategoryInfo,
               ): string => category.name}
               onChange={(_, category): void => {
-                setFormState({
-                  ...formState,
-                  folderId: category?.id ?? null,
+                setItemFormState({
+                  ...itemFormState,
+                  category: category?.id ?? '',
                 });
               }}
               renderInput={(params) => (
@@ -205,9 +232,12 @@ const AgendaItemsUpdateModal: React.FC<
                 <Form.Control
                   type="text"
                   placeholder={t('enterTitle')}
-                  value={formState.title}
+                  value={itemFormState.name}
                   onChange={(e) =>
-                    setFormState({ ...formState, title: e.target.value })
+                    setItemFormState({
+                      ...itemFormState,
+                      name: e.target.value,
+                    })
                   }
                 />
               </Form.Group>
@@ -218,10 +248,13 @@ const AgendaItemsUpdateModal: React.FC<
                 <Form.Control
                   type="text"
                   placeholder={t('enterDuration')}
-                  value={formState.duration}
+                  value={itemFormState.duration}
                   required
                   onChange={(e) =>
-                    setFormState({ ...formState, duration: e.target.value })
+                    setItemFormState({
+                      ...itemFormState,
+                      duration: e.target.value,
+                    })
                   }
                 />
               </Form.Group>
@@ -234,9 +267,12 @@ const AgendaItemsUpdateModal: React.FC<
               as="textarea"
               rows={1}
               placeholder={t('enterDescription')}
-              value={formState.description}
+              value={itemFormState.description}
               onChange={(e) =>
-                setFormState({ ...formState, description: e.target.value })
+                setItemFormState({
+                  ...itemFormState,
+                  description: e.target.value,
+                })
               }
             />
           </Form.Group>
@@ -257,7 +293,7 @@ const AgendaItemsUpdateModal: React.FC<
               </Button>
             </div>
 
-            {formState.urls.map((url, index) => (
+            {itemFormState.url.map((url, index) => (
               <li key={index} className={styles.urlListItem}>
                 <FaLink className={styles.urlIcon} />
                 <a href={url} target="_blank" rel="noopener noreferrer">
@@ -288,9 +324,9 @@ const AgendaItemsUpdateModal: React.FC<
             />
             <Form.Text>{t('attachmentLimit')}</Form.Text>
           </Form.Group>
-          {formState.attachments && (
+          {itemFormState.attachments && (
             <div className={styles.previewFile} data-testid="mediaPreview">
-              {formState.attachments.map((attachment, index) => (
+              {itemFormState.attachments.map((attachment, index) => (
                 <div key={index} className={styles.attachmentPreview}>
                   {attachment.includes('video') ? (
                     <video

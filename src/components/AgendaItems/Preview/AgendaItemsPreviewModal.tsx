@@ -30,14 +30,40 @@ import React from 'react';
 import { Modal, Form, Button } from 'react-bootstrap';
 import styles from 'style/app-fixed.module.css';
 import { FaLink } from 'react-icons/fa';
-import type { InterfaceAgendaItemsPreviewModalProps } from 'types/Agenda/interface';
+
+interface InterfaceFormStateType {
+  id: string;
+  name: string;
+  description: string;
+  duration: string;
+  attachment?: string[];
+  creator: {
+    id: string;
+    name: string;
+  };
+  category: {
+    name: string;
+    description: string;
+  };
+  url: string[];
+}
+
+export interface InterfaceAgendaItemsPreviewModalProps {
+  agendaItemPreviewModalIsOpen: boolean;
+  hidePreviewModal: () => void;
+  showUpdateItemModal: () => void;
+  toggleDeleteItemModal: () => void;
+  formState: InterfaceFormStateType;
+  t: (key: string) => string;
+}
+
 const AgendaItemsPreviewModal: React.FC<
   InterfaceAgendaItemsPreviewModalProps
 > = ({
   agendaItemPreviewModalIsOpen,
   hidePreviewModal,
-  showUpdateModal,
-  toggleDeleteModal,
+  showUpdateItemModal,
+  toggleDeleteItemModal,
   formState,
   t,
 }) => {
@@ -47,7 +73,7 @@ const AgendaItemsPreviewModal: React.FC<
    * @returns JSX elements for each attachment, displaying videos and images.
    */
   const renderAttachments = (): JSX.Element[] => {
-    return formState.attachments.map((attachment, index) => (
+    return formState.attachment.map((attachment, index) => (
       <div key={index} className={styles.previewFile}>
         {attachment.includes('video') ? (
           <a href={attachment} target="_blank" rel="noopener noreferrer">
@@ -77,7 +103,7 @@ const AgendaItemsPreviewModal: React.FC<
    * @returns JSX elements for each URL, displaying clickable links.
    */
   const renderUrls = (): JSX.Element[] => {
-    return formState.urls.map((url, index) => (
+    return formState.url.map((url, index) => (
       <li key={index} className={styles.urlListItem}>
         <FaLink className={styles.urlIcon} />
         <a href={url} target="_blank" rel="noopener noreferrer">
@@ -107,13 +133,11 @@ const AgendaItemsPreviewModal: React.FC<
           <div>
             <div className={styles.preview}>
               <p>{t('category')}</p>
-              <span className={styles.view}>
-                {formState.agendaItemCategoryNames.join(', ')}
-              </span>
+              <span className={styles.view}>{formState.category.name}</span>
             </div>
             <div className={styles.preview}>
               <p>{t('title')}</p>
-              <span className={styles.view}>{formState.title}</span>
+              <span className={styles.view}>{formState.name}</span>
             </div>
             <div className={styles.preview}>
               <p>{t('description')}</p>
@@ -139,7 +163,7 @@ const AgendaItemsPreviewModal: React.FC<
           <div className={styles.iconContainer}>
             <Button
               size="sm"
-              onClick={showUpdateModal}
+              onClick={showUpdateItemModal}
               className={styles.icon}
               data-testid="previewAgendaItemModalUpdateBtn"
             >
@@ -147,7 +171,7 @@ const AgendaItemsPreviewModal: React.FC<
             </Button>
             <Button
               size="sm"
-              onClick={toggleDeleteModal}
+              onClick={toggleDeleteItemModal}
               className={styles.icon}
               data-testid="previewAgendaItemModalDeleteBtn"
               variant="danger"
