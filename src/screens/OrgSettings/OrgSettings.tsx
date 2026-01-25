@@ -42,7 +42,6 @@ import { Button, Row, Col } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
 import styles from 'style/app-fixed.module.css';
 import OrgActionItemCategories from 'components/OrgSettings/ActionItemCategories/OrgActionItemCategories';
-import OrganizationAgendaCategory from 'components/OrgSettings/AgendaItemCategories/OrganizationAgendaCategory';
 import { Navigate, useParams } from 'react-router';
 import GeneralSettings from 'components/OrgSettings/General/GeneralSettings';
 
@@ -98,12 +97,6 @@ function OrgSettings(): JSX.Element {
             return (
               <div data-testid="actionItemCategoriesTab">
                 <OrgActionItemCategories orgId={orgId} />
-              </div>
-            );
-          case 'agendaItemCategories':
-            return (
-              <div data-testid="agendaItemCategoriesTab">
-                <OrganizationAgendaCategory orgId={orgId} />
               </div>
             );
         }

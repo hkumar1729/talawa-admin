@@ -1,284 +1,284 @@
-/**
- * Component for managing and displaying agenda items for a specific event.
- *
- * @component
- * @param props - Component props.
- * @param props.eventId - The ID of the event for which agenda items are managed.
- *
- * @remarks
- * This component fetches and displays agenda items associated with a specific event.
- * It also allows users to create new agenda items using a modal form.
- *
- * @requires
- * - `useQuery` from `@apollo/client` for fetching agenda categories and agenda items.
- * - `useMutation` from `@apollo/client` for creating new agenda items.
- * - `useTranslation` from `react-i18next` for internationalization.
- * - `react-toastify` for displaying success and error notifications.
- * - `react-bootstrap` for UI components.
- * - `@mui/icons-material` for displaying error icons.
- *
- * @returns A JSX element containing the agenda items management UI.
- *
- * @example
- * ```tsx
- * <EventAgendaItems eventId="12345" />
- * ```
- *
- * @remarks
- * The component handles:
- * - Fetching agenda categories and agenda items using GraphQL queries.
- * - Displaying a loader while data is being fetched.
- * - Showing error messages if data fetching fails.
- * - Managing the state of the create agenda item modal.
- * - Submitting new agenda items via a GraphQL mutation.
- *
- * @throws Will display an error message if data fetching or mutation fails.
- */
-import React, { useState } from 'react';
-import type { ChangeEvent } from 'react';
-import { useTranslation } from 'react-i18next';
-import { Button } from 'react-bootstrap';
+// /**
+//  * Component for managing and displaying agenda items for a specific event.
+//  *
+//  * @component
+//  * @param props - Component props.
+//  * @param props.eventId - The ID of the event for which agenda items are managed.
+//  *
+//  * @remarks
+//  * This component fetches and displays agenda items associated with a specific event.
+//  * It also allows users to create new agenda items using a modal form.
+//  *
+//  * @requires
+//  * - `useQuery` from `@apollo/client` for fetching agenda categories and agenda items.
+//  * - `useMutation` from `@apollo/client` for creating new agenda items.
+//  * - `useTranslation` from `react-i18next` for internationalization.
+//  * - `react-toastify` for displaying success and error notifications.
+//  * - `react-bootstrap` for UI components.
+//  * - `@mui/icons-material` for displaying error icons.
+//  *
+//  * @returns A JSX element containing the agenda items management UI.
+//  *
+//  * @example
+//  * ```tsx
+//  * <EventAgendaItems eventId="12345" />
+//  * ```
+//  *
+//  * @remarks
+//  * The component handles:
+//  * - Fetching agenda categories and agenda items using GraphQL queries.
+//  * - Displaying a loader while data is being fetched.
+//  * - Showing error messages if data fetching fails.
+//  * - Managing the state of the create agenda item modal.
+//  * - Submitting new agenda items via a GraphQL mutation.
+//  *
+//  * @throws Will display an error message if data fetching or mutation fails.
+//  */
+// import React, { useState } from 'react';
+// import type { ChangeEvent } from 'react';
+// import { useTranslation } from 'react-i18next';
+// import { Button } from 'react-bootstrap';
 
-import { WarningAmberRounded } from '@mui/icons-material';
-import { toast } from 'react-toastify';
+// import { WarningAmberRounded } from '@mui/icons-material';
+// import { toast } from 'react-toastify';
 
-import { useMutation, useQuery } from '@apollo/client';
-import {
-  AGENDA_ITEM_CATEGORY_LIST,
-  AgendaItemByEvent,
-} from 'GraphQl/Queries/Queries';
-import { CREATE_AGENDA_ITEM_MUTATION } from 'GraphQl/Mutations/mutations';
+// import { useMutation, useQuery } from '@apollo/client';
+// import {
+//   AGENDA_ITEM_CATEGORY_LIST,
+//   AgendaItemByEvent,
+// } from 'GraphQl/Queries/Queries';
+// import { CREATE_AGENDA_ITEM_MUTATION } from 'GraphQl/Mutations/mutations';
 
-import type {
-  InterfaceAgendaItemCategoryList,
-  InterfaceAgendaItemList,
-} from 'utils/interfaces';
-import AgendaItemsContainer from 'components/AgendaItems/AgendaItemsContainer';
-import AgendaItemsCreateModal from 'components/AgendaItems/Create/AgendaItemsCreateModal';
+// import type {
+//   InterfaceAgendaItemCategoryList,
+//   InterfaceAgendaItemList,
+// } from 'utils/interfaces';
+// import AgendaItemsContainer from 'components/AgendaItems/AgendaItemsContainer';
+// import AgendaItemsCreateModal from 'components/AgendaItems/Create/AgendaItemsCreateModal';
 
-import styles from 'style/app-fixed.module.css';
-import Loader from 'components/Loader/Loader';
+// import styles from 'style/app-fixed.module.css';
+// import Loader from 'components/Loader/Loader';
 
-function EventAgendaItems(props: { eventId: string }): JSX.Element {
-  const { eventId } = props;
+// function EventAgendaItems(props: { eventId: string }): JSX.Element {
+//   const { eventId } = props;
 
-  const { t } = useTranslation('translation', { keyPrefix: 'agendaItems' });
+//   const { t } = useTranslation('translation', { keyPrefix: 'agendaItems' });
 
-  // State to manage the create agenda item modal visibility
-  const [agendaItemCreateModalIsOpen, setAgendaItemCreateModalIsOpen] =
-    useState<boolean>(false);
+//   // State to manage the create agenda item modal visibility
+//   const [agendaItemCreateModalIsOpen, setAgendaItemCreateModalIsOpen] =
+//     useState<boolean>(false);
 
-  // State to manage form values
-  const [formState, setFormState] = useState({
-    folderId: null as string | null,
-    title: '',
-    description: '',
-    duration: '',
-    attachments: [] as {
-      mimeType: string;
-      fileHash: string;
-      objectName: string;
-    }[],
-    urls: [] as string[],
-  });
+//   // State to manage form values
+//   const [formState, setFormState] = useState({
+//     folderId: null as string | null,
+//     title: '',
+//     description: '',
+//     duration: '',
+//     attachments: [] as {
+//       mimeType: string;
+//       fileHash: string;
+//       objectName: string;
+//     }[],
+//     urls: [] as string[],
+//   });
 
-  // Query for agenda item categories
-  const {
-    data: agendaCategoryData,
-    loading: agendaCategoryLoading,
-    error: agendaCategoryError,
-  }: {
-    data: InterfaceAgendaItemCategoryList | undefined;
-    loading: boolean;
-    error?: Error | undefined;
-  } = useQuery(AGENDA_ITEM_CATEGORY_LIST, {
-    variables: {
-      eventId,
-    },
-    notifyOnNetworkStatusChange: true,
-  });
+//   // Query for agenda item categories
+//   const {
+//     data: agendaCategoryData,
+//     loading: agendaCategoryLoading,
+//     error: agendaCategoryError,
+//   }: {
+//     data: InterfaceAgendaItemCategoryList | undefined;
+//     loading: boolean;
+//     error?: Error | undefined;
+//   } = useQuery(AGENDA_ITEM_CATEGORY_LIST, {
+//     variables: {
+//       eventId,
+//     },
+//     notifyOnNetworkStatusChange: true,
+//   });
 
-  // Query for agenda items by event
-  const {
-    data: agendaItemData,
-    loading: agendaItemLoading,
-    error: agendaItemError,
-    refetch: refetchAgendaItem,
-  }: {
-    data: InterfaceAgendaItemList | undefined;
-    loading: boolean;
-    error?: unknown | undefined;
-    refetch: () => void;
-  } = useQuery(AgendaItemByEvent, {
-    variables: { eventId }, //eventId
-    skip: !eventId,
-    notifyOnNetworkStatusChange: true,
-  });
+//   // Query for agenda items by event
+//   const {
+//     data: agendaItemData,
+//     loading: agendaItemLoading,
+//     error: agendaItemError,
+//     refetch: refetchAgendaItem,
+//   }: {
+//     data: InterfaceAgendaItemList | undefined;
+//     loading: boolean;
+//     error?: unknown | undefined;
+//     refetch: () => void;
+//   } = useQuery(AgendaItemByEvent, {
+//     variables: { eventId }, //eventId
+//     skip: !eventId,
+//     notifyOnNetworkStatusChange: true,
+//   });
 
-  // Mutation for creating an agenda item
-  const [createAgendaItem] = useMutation(CREATE_AGENDA_ITEM_MUTATION);
+//   // Mutation for creating an agenda item
+//   const [createAgendaItem] = useMutation(CREATE_AGENDA_ITEM_MUTATION);
 
-  /**
-   * Handler for creating a new agenda item.
-   *
-   * @param  e - The form submit event.
-   */
-  const createAgendaItemHandler = async (
-    e: ChangeEvent<HTMLFormElement>,
-  ): Promise<void> => {
-    e.preventDefault();
-    const agendaItems = Array.isArray(agendaItemData?.agendaItemByEventId)
-      ? agendaItemData?.agendaItemByEventId
-      : [];
-    const nextSequence = agendaItems.length + 1;
-    try {
-      await createAgendaItem({
-        variables: {
-          input: {
-            name: formState.title,
-            description: formState.description,
-            eventId: eventId,
-            sequence: nextSequence, // Assign sequence based on current length
-            duration: formState.duration,
-            folderId: formState.folderId,
-            attachments:
-              formState.attachments.length > 0
-                ? formState.attachments.map((att) => ({
-                    mimeType: att.mimeType,
-                    fileHash: att.fileHash,
-                    objectName: att.objectName,
-                  }))
-                : undefined,
-            //type:
-            //key:
-            url:
-              formState.urls.length > 0
-                ? formState.urls.map((u) => ({
-                    agendaItemURL: u,
-                  }))
-                : undefined,
-            type: 'general',
-          },
-        },
-      });
+//   /**
+//    * Handler for creating a new agenda item.
+//    *
+//    * @param  e - The form submit event.
+//    */
+//   const createAgendaItemHandler = async (
+//     e: ChangeEvent<HTMLFormElement>,
+//   ): Promise<void> => {
+//     e.preventDefault();
+//     const agendaItems = Array.isArray(agendaItemData?.agendaItemByEventId)
+//       ? agendaItemData?.agendaItemByEventId
+//       : [];
+//     const nextSequence = agendaItems.length + 1;
+//     try {
+//       await createAgendaItem({
+//         variables: {
+//           input: {
+//             name: formState.title,
+//             description: formState.description,
+//             eventId: eventId,
+//             sequence: nextSequence, // Assign sequence based on current length
+//             duration: formState.duration,
+//             folderId: formState.folderId,
+//             attachments:
+//               formState.attachments.length > 0
+//                 ? formState.attachments.map((att) => ({
+//                     mimeType: att.mimeType,
+//                     fileHash: att.fileHash,
+//                     objectName: att.objectName,
+//                   }))
+//                 : undefined,
+//             //type:
+//             //key:
+//             url:
+//               formState.urls.length > 0
+//                 ? formState.urls.map((u) => ({
+//                     agendaItemURL: u,
+//                   }))
+//                 : undefined,
+//             type: 'general',
+//           },
+//         },
+//       });
 
-      // Reset form state and hide modal
-      setFormState({
-        title: '',
-        description: '',
-        duration: '',
-        folderId: null,
-        attachments: [] as {
-          mimeType: string;
-          fileHash: string;
-          objectName: string;
-        }[],
-        urls: [] as string[],
-      });
-      hideCreateModal();
-      refetchAgendaItem();
-      toast.success(t('agendaItemCreated') as string);
-    } catch (error: unknown) {
-      if (error instanceof Error) {
-        toast.error(error.message);
-      }
-    }
-  };
+//       // Reset form state and hide modal
+//       setFormState({
+//         title: '',
+//         description: '',
+//         duration: '',
+//         folderId: null,
+//         attachments: [] as {
+//           mimeType: string;
+//           fileHash: string;
+//           objectName: string;
+//         }[],
+//         urls: [] as string[],
+//       });
+//       hideCreateModal();
+//       refetchAgendaItem();
+//       toast.success(t('agendaItemCreated') as string);
+//     } catch (error: unknown) {
+//       if (error instanceof Error) {
+//         toast.error(error.message);
+//       }
+//     }
+//   };
 
-  /**
-   * Toggles the visibility of the create agenda item modal.
-   */
-  const showCreateModal = (): void => {
-    setFormState({
-      folderId: null,
-      title: '',
-      description: '',
-      duration: '',
-      attachments: [],
-      urls: [],
-    });
-    setAgendaItemCreateModalIsOpen(!agendaItemCreateModalIsOpen);
-  };
+//   /**
+//    * Toggles the visibility of the create agenda item modal.
+//    */
+//   const showCreateModal = (): void => {
+//     setFormState({
+//       folderId: null,
+//       title: '',
+//       description: '',
+//       duration: '',
+//       attachments: [],
+//       urls: [],
+//     });
+//     setAgendaItemCreateModalIsOpen(!agendaItemCreateModalIsOpen);
+//   };
 
-  /**
-   * Hides the create agenda item modal.
-   */
-  const hideCreateModal = (): void => {
-    setAgendaItemCreateModalIsOpen(!agendaItemCreateModalIsOpen);
-  };
+//   /**
+//    * Hides the create agenda item modal.
+//    */
+//   const hideCreateModal = (): void => {
+//     setAgendaItemCreateModalIsOpen(!agendaItemCreateModalIsOpen);
+//   };
 
-  // Show loader while data is loading
-  if (agendaItemLoading || agendaCategoryLoading) return <Loader size="xl" />;
+//   // Show loader while data is loading
+//   if (agendaItemLoading || agendaCategoryLoading) return <Loader size="xl" />;
 
-  // Show error message if there is an error loading data
-  if (agendaItemError || agendaCategoryError) {
-    const errorMessage =
-      agendaCategoryError?.message ||
-      (agendaItemError as Error)?.message ||
-      'Unknown error';
+//   // Show error message if there is an error loading data
+//   if (agendaItemError || agendaCategoryError) {
+//     const errorMessage =
+//       agendaCategoryError?.message ||
+//       (agendaItemError as Error)?.message ||
+//       'Unknown error';
 
-    return (
-      <div className={`${styles.container} bg-white rounded-4 my-3`}>
-        <div className={styles.message}>
-          <WarningAmberRounded className={styles.errorIcon} fontSize="large" />
-          <h6 className="fw-bold text-danger text-center">
-            Error occurred while loading{' '}
-            {agendaCategoryError ? 'Agenda Categories' : 'Agenda Items'} Data
-            <br />
-            {errorMessage}
-          </h6>
-        </div>
-      </div>
-    );
-  }
+//     return (
+//       <div className={`${styles.container} bg-white rounded-4 my-3`}>
+//         <div className={styles.message}>
+//           <WarningAmberRounded className={styles.errorIcon} fontSize="large" />
+//           <h6 className="fw-bold text-danger text-center">
+//             Error occurred while loading{' '}
+//             {agendaCategoryError ? 'Agenda Categories' : 'Agenda Items'} Data
+//             <br />
+//             {errorMessage}
+//           </h6>
+//         </div>
+//       </div>
+//     );
+//   }
 
-  return (
-    <div className={styles.eventAgendaItemContainer}>
-      <div className={`bg-white rounded-4 my-3`}>
-        <div className={`pt-4 mx-4`}>
-          <div className={styles.btnsContainer}>
-            <div className=" d-none d-lg-inline flex-grow-1 d-flex align-items-center border bg-light-subtle rounded-3">
-              {/* <input
-                type="search"
-                className="form-control border-0 bg-light-subtle"
-                placeholder={t('search')}
-                onChange={(e) => setSearchValue(e.target.value)}
-                value={searchValue}
-                data-testid="search"
-              /> */}
-            </div>
+//   return (
+//     <div className={styles.eventAgendaItemContainer}>
+//       <div className={`bg-white rounded-4 my-3`}>
+//         <div className={`pt-4 mx-4`}>
+//           <div className={styles.btnsContainer}>
+//             <div className=" d-none d-lg-inline flex-grow-1 d-flex align-items-center border bg-light-subtle rounded-3">
+//               {/* <input
+//                 type="search"
+//                 className="form-control border-0 bg-light-subtle"
+//                 placeholder={t('search')}
+//                 onChange={(e) => setSearchValue(e.target.value)}
+//                 value={searchValue}
+//                 data-testid="search"
+//               /> */}
+//             </div>
 
-            <Button
-              onClick={showCreateModal}
-              data-testid="createAgendaItemBtn"
-              className={styles.createAgendaItemButton}
-            >
-              {t('createAgendaItem')}
-            </Button>
-          </div>
-        </div>
+//             <Button
+//               onClick={showCreateModal}
+//               data-testid="createAgendaItemBtn"
+//               className={styles.createAgendaItemButton}
+//             >
+//               {t('createAgendaItem')}
+//             </Button>
+//           </div>
+//         </div>
 
-        <hr />
+//         <hr />
 
-        <AgendaItemsContainer
-          agendaItemConnection={`Event`}
-          agendaItemData={agendaItemData?.agendaItemByEventId}
-          agendaItemRefetch={refetchAgendaItem}
-          agendaItemCategories={agendaCategoryData?.agendaCategoryByEventId}
-        />
-      </div>
+//         <AgendaItemsContainer
+//           agendaItemConnection={`Event`}
+//           agendaItemData={agendaItemData?.agendaItemByEventId}
+//           agendaItemRefetch={refetchAgendaItem}
+//           agendaItemCategories={agendaCategoryData?.agendaCategoryByEventId}
+//         />
+//       </div>
 
-      <AgendaItemsCreateModal
-        agendaItemCreateModalIsOpen={agendaItemCreateModalIsOpen}
-        hideCreateModal={hideCreateModal}
-        formState={formState}
-        setFormState={setFormState}
-        createAgendaItemHandler={createAgendaItemHandler}
-        t={t}
-        agendaItemCategories={agendaCategoryData?.agendaCategoryByEventId}
-      />
-    </div>
-  );
-}
+//       <AgendaItemsCreateModal
+//         agendaItemCreateModalIsOpen={agendaItemCreateModalIsOpen}
+//         hideCreateModal={hideCreateModal}
+//         formState={formState}
+//         setFormState={setFormState}
+//         createAgendaItemHandler={createAgendaItemHandler}
+//         t={t}
+//         agendaItemCategories={agendaCategoryData?.agendaCategoryByEventId}
+//       />
+//     </div>
+//   );
+// }
 
-export default EventAgendaItems;
+// export default EventAgendaItems;

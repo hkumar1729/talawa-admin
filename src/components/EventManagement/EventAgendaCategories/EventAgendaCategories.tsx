@@ -62,7 +62,7 @@ const organizationAgendaCategory: FC<InterfaceAgendaCategoryProps> = ({
   // State for managing modal visibility and form data
   const [agendaCategoryCreateModalIsOpen, setAgendaCategoryCreateModalIsOpen] =
     useState<boolean>(false);
-  const [searchTerm, setSearchTerm] = useState<string>('');
+  //const [searchTerm, setSearchTerm] = useState<string>('');
   const [formState, setFormState] = useState({
     name: '',
     description: '',
@@ -170,7 +170,7 @@ const organizationAgendaCategory: FC<InterfaceAgendaCategoryProps> = ({
           <div className={`${styles.btnsContainer} my-0`}>
             <SearchBar
               placeholder={tCommon('searchByName')}
-              onSearch={setSearchTerm}
+              //onSearch={setSearchTerm}
               inputTestId="searchByName"
               buttonTestId="searchBtn"
             />
