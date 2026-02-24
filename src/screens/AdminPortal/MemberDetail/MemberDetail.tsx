@@ -52,6 +52,7 @@ import UserEvents from 'components/UserDetails/UserEvents';
 import UserTags from 'components/UserDetails/UserTags';
 import { useParams } from 'react-router-dom';
 import useLocalStorage from 'utils/useLocalstorage';
+import Security from './Security';
 
 const MemberDetail: React.FC = (): JSX.Element => {
   const { getItem } = useLocalStorage();
@@ -74,6 +75,12 @@ const MemberDetail: React.FC = (): JSX.Element => {
             icon={'/images/svg/material-symbols_dashboard-outline.svg'}
             isActive={activeTab === tCommon('overview')}
             action={() => setActiveTab(tCommon('overview'))}
+          />
+          <PeopleTabNavbarButton
+            title={tCommon('security')}
+            icon={'/images/svg/shield-user.svg'}
+            isActive={activeTab === tCommon('security')}
+            action={() => setActiveTab(tCommon('security'))}
           />
           <PeopleTabNavbarButton
             title={tCommon('organizations')}
@@ -99,6 +106,7 @@ const MemberDetail: React.FC = (): JSX.Element => {
           {activeTab === tCommon('overview') && (
             <UserContactDetails id={userId} />
           )}
+          {activeTab === tCommon('security') && <Security />}
           {activeTab === tCommon('organizations') && <UserOrganizations />}
           {activeTab === tCommon('events') && <UserEvents />}
           {activeTab === tCommon('tags') && <UserTags id={userId} />}

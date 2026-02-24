@@ -32,7 +32,11 @@ import { Button } from 'shared-components/Button';
 import { useTranslation } from 'react-i18next';
 import { useLocation, useParams } from 'react-router';
 import styles from './UserContactDetails.module.css';
-import { UPDATE_USER_MUTATION } from 'GraphQl/Mutations/mutations';
+import {
+  ADMIN_UPDATE_USER_PASSWORD,
+  UPDATE_USER_MUTATION,
+  UPDATE_USER_PASSWORD,
+} from 'GraphQl/Mutations/mutations';
 import { GET_USER_BY_ID } from 'GraphQl/Queries/Queries';
 import { NotificationToast } from 'components/NotificationToast/NotificationToast';
 import { errorHandler } from 'utils/errorHandler';
@@ -59,6 +63,7 @@ import { FormFieldGroup } from 'shared-components/FormFieldGroup/FormFieldGroup'
 import { InterfaceMemberDetailProps } from 'types/AdminPortal/MemberDetail/interface';
 import { resolveAvatarFile } from './resolveAvatarFile';
 import { phoneFieldConfigs, addressFieldConfigs } from './fieldConfigs';
+import PasswordUpdateModal from 'shared-components/Auth/PasswordUpdate/PasswordUpdateModal';
 const UserContactDetails: React.FC<InterfaceMemberDetailProps> = ({
   id,
 }): JSX.Element => {
@@ -70,11 +75,18 @@ const UserContactDetails: React.FC<InterfaceMemberDetailProps> = ({
   const [isUpdated, setisUpdated] = useState(false);
   const params = useParams();
   const storedUserId = getItem('id') || getItem('userId');
+  const { userId } = useParams();
   const currentId =
     location.state?.id || id || params.userId || storedUserId || '';
   const [selectedAvatar, setSelectedAvatar] = useState<File | null>(null);
   const [newAvatarUploaded, setNewAvatarUploaded] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [openPasswordModal, setOpenPasswordModal] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    oldPassword: '',
+    newPassword: '',
+    confirmNewPassword: '',
+  });
 
   document.title = t('title');
   const [formState, setFormState] = useState({
@@ -95,7 +107,6 @@ const UserContactDetails: React.FC<InterfaceMemberDetailProps> = ({
     name: '',
     natalSex: '',
     naturalLanguageCode: '',
-    password: '',
     postalCode: '',
     state: '',
     workPhoneNumber: '',
@@ -171,6 +182,79 @@ const UserContactDetails: React.FC<InterfaceMemberDetailProps> = ({
     handleFileUpload(e);
     setNewAvatarUploaded(true);
   };
+
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPasswordForm((prev) => ({
+      ...prev,
+      [e.target.name]: e.target.value,
+    }));
+  };
+  const loggedInUserId = getItem('id') || getItem('userId');
+  const isAdminEditingOtherUser = loggedInUserId !== resolvedUserId;
+  const [updateUserPassword] = useMutation(UPDATE_USER_PASSWORD);
+  const [adminUpdateUserPassword] = useMutation(ADMIN_UPDATE_USER_PASSWORD);
+  const handlePasswordSubmit = async (): Promise<void> => {
+    const { oldPassword, newPassword, confirmNewPassword } = passwordForm;
+
+    if (!newPassword || !confirmNewPassword) {
+      NotificationToast.error(t('passCantBeEmpty'));
+      return;
+    }
+
+    if (newPassword !== confirmNewPassword) {
+      NotificationToast.error(t('passNoMatch'));
+      return;
+    }
+
+    const passwordError = validatePassword(newPassword);
+    if (passwordError) {
+      NotificationToast.error(passwordError);
+      return;
+    }
+
+    try {
+      if (isAdminEditingOtherUser) {
+        await adminUpdateUserPassword({
+          variables: {
+            input: {
+              id: userId,
+              newPassword,
+              confirmNewPassword,
+            },
+          },
+        });
+      } else {
+        if (!oldPassword) {
+          NotificationToast.error(t('enterCurrentPassword'));
+          return;
+        }
+
+        await updateUserPassword({
+          variables: {
+            input: {
+              oldPassword,
+              newPassword,
+              confirmNewPassword,
+            },
+          },
+        });
+      }
+
+      NotificationToast.success(t('passwordChangedSuccessfully'));
+
+      setOpenPasswordModal(false);
+      setPasswordForm({
+        oldPassword: '',
+        newPassword: '',
+        confirmNewPassword: '',
+      });
+    } catch (err) {
+      if (err instanceof Error) {
+        NotificationToast.error(err.message);
+      }
+    }
+  };
+
   const handleUserUpdate = async (): Promise<void> => {
     const removeEmptyFields = <T extends Record<string, string | File | null>>(
       obj: T,
@@ -180,13 +264,6 @@ const UserContactDetails: React.FC<InterfaceMemberDetailProps> = ({
           ([, v]) => v != null && (typeof v !== 'string' || v.trim()),
         ),
       ) as Partial<T>;
-    const passwordError = formState.password
-      ? validatePassword(formState.password)
-      : null;
-    if (passwordError) {
-      NotificationToast.error(passwordError);
-      return;
-    }
 
     let avatarFile = await resolveAvatarFile({
       newAvatarUploaded,
@@ -211,7 +288,6 @@ const UserContactDetails: React.FC<InterfaceMemberDetailProps> = ({
       name: formState.name,
       natalSex: formState.natalSex,
       naturalLanguageCode: formState.naturalLanguageCode,
-      password: formState.password,
       postalCode: formState.postalCode,
       state: formState.state,
       workPhoneNumber: formState.workPhoneNumber,
@@ -450,23 +526,6 @@ const UserContactDetails: React.FC<InterfaceMemberDetailProps> = ({
                   </div>
                 </Col>
                 <Col md={12}>
-                  <label htmlFor="password" className="form-label">
-                    {tCommon('password')}
-                  </label>
-                  <input
-                    id="password"
-                    value={formState.password}
-                    className={`form-control ${styles.inputColor}`}
-                    type="password"
-                    name="password"
-                    onChange={(e) =>
-                      handleFieldChange('password', e.target.value)
-                    }
-                    data-testid="inputPassword"
-                    placeholder={tCommon('enterPassword')}
-                  />
-                </Col>
-                <Col md={12}>
                   <label htmlFor="description" className="form-label">
                     {tCommon('description')}
                   </label>
@@ -594,28 +653,53 @@ const UserContactDetails: React.FC<InterfaceMemberDetailProps> = ({
             </Card.Body>
           </Card>
         </Col>
-        {isUpdated && (
-          <Col md={12}>
-            <Card.Footer className=" border-top-0 d-flex justify-content-end gap-2 py-3 px-2">
-              <Button
-                variant="outline-secondary"
-                onClick={resetChanges}
-                data-testid="resetChangesBtn"
-              >
-                {tCommon('resetChanges')}
-              </Button>
-              <Button
-                variant="outline"
-                className={styles.saveChangesBtn}
-                onClick={handleUserUpdate}
-                data-testid="saveChangesBtn"
-              >
-                {tCommon('saveChanges')}
-              </Button>
-            </Card.Footer>
-          </Col>
-        )}
+        <Col md={12}>
+          <Card.Footer className="border-top-0 d-flex justify-content-end gap-2 py-3 px-2">
+            <Button
+              variant="outline-secondary"
+              onClick={() => setOpenPasswordModal(true)}
+              data-testid="changePasswordBtn"
+            >
+              {t('changePassword')}
+            </Button>
+
+            {/* Only when form updated */}
+            {isUpdated && (
+              <>
+                <Button
+                  variant="outline-secondary"
+                  onClick={resetChanges}
+                  data-testid="resetChangesBtn"
+                >
+                  {tCommon('resetChanges')}
+                </Button>
+
+                <Button
+                  variant="outline"
+                  className={styles.saveChangesBtn}
+                  onClick={handleUserUpdate}
+                  data-testid="saveChangesBtn"
+                >
+                  {tCommon('saveChanges')}
+                </Button>
+              </>
+            )}
+          </Card.Footer>
+        </Col>
       </Row>
+      <PasswordUpdateModal
+        open={openPasswordModal}
+        onClose={() => setOpenPasswordModal(false)}
+        onSubmit={handlePasswordSubmit}
+        values={passwordForm}
+        onChange={handlePasswordChange}
+        hidePreviousPassword={isAdminEditingOtherUser}
+        title={t('changePassword')}
+        saveText={tCommon('saveChanges')}
+        oldPasswordLabel={t('oldPassword')}
+        newPasswordLabel={t('newPassword')}
+        confirmPasswordLabel={t('confirmNewPassword')}
+      />
     </LocalizationProvider>
   );
 };
